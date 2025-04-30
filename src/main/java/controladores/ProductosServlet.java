@@ -5,77 +5,64 @@
 package controladores;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+@WebServlet("/productos")
 public class ProductosServlet extends HttpServlet {
-
-    /**
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
-     * methods.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
-        try (PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
-            out.println("<!DOCTYPE html>");
-            out.println("<html>");
-            out.println("<head>");
-            out.println("<title>Servlet ProductosServlet</title>");            
-            out.println("</head>");
-            out.println("<body>");
-            out.println("<h1>Servlet ProductosServlet at " + request.getContextPath() + "</h1>");
-            out.println("</body>");
-            out.println("</html>");
-        }
-    }
-
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
+    
+    private  static final List<Producto> PRODUCTOS = Producto.generarProductos(50);
+    private static final int ITEMS_POR_PAGINA = 10;
+    
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+        int pagina = 1;
+        String categoria = request.getParameter("categoria");
+        
+        if(request.getParameter("pagina") != null){
+            try{
+                pagina = Integer.parseInt(request.getParameter("pagina"));
+                if(pagina < 1) pagina = 1;
+            }catch(NumberFormatException e){
+                
+            }
+        }
+        List<Producto> productosFiltrados;
+        if(categoria != null && !categoria.isEmpty()){
+            productosFiltrados = PRODUCTOS.stream()
+                    .filter(p -> p.getCategoria().equals(categoria))
+                    .collect(Collectors.toList());
+        }else{
+            productosFiltrados = PRODUCTOS;
+        }
+        int totalProductos = productosFiltrados.size();
+        int totalPaginas = (int) Math.ceil((double) totalProductos / ITEMS_POR_PAGINA);
+        
+        if(pagina > totalPaginas) pagina = totalPaginas;
+        
+        int inicio = (pagina - 1) * ITEMS_POR_PAGINA;
+        int fin = Math.min(pagina + ITEMS_POR_PAGINA, totalProductos);
+        
+        List<Producto> productosActuales = productosFiltrados.subList(inicio, fin);
+        
+        Set<String> categorias = PRODUCTOS.stream()
+                .map(Producto::getCategoria)
+                .collect(Collectors.toSet());
+        
+        request.setAttribute("productos", productosActuales);
+        request.setAttribute("categorias", categorias);
+        request.setAttribute("categoriaActual", categoria);
+        request.setAttribute("paginaActual", pagina);
+        request.setAttribute("totalPaginas", totalPaginas);
+        
+        request.getRequestDispatcher("/productos.jsp").forward(request, response);
     }
-
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        processRequest(request, response);
-    }
-
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
-    @Override
-    public String getServletInfo() {
-        return "Short description";
-    }// </editor-fold>
-
 }
