@@ -4,6 +4,9 @@
  */
 package controladores;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  *
  * @author Personal
@@ -19,6 +22,10 @@ public class Producto {
         this.nombre = nombre;
         this.precio = precio;
         this.categoria = categoria;
+    }
+
+    private Producto() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
     public int getId() {
@@ -51,5 +58,20 @@ public class Producto {
 
     public void setCategoria(String categoria) {
         this.categoria = categoria;
+    }
+    
+    public static List<Producto> generarProductos(int cantidad){
+        List<Producto> productos = new ArrayList<>();
+        String[] categorias = {"Electronica", "Ropa", "Hogar", "Alimentos", "Juguetes"};
+        
+        for(int i = 1; i <= cantidad; i++){
+                Producto p = new Producto();
+                p.setId(i);
+                p.setNombre("Producto " + i);
+                p.setPrecio(10 + Math.random() * 90);
+                p.setCategoria(categorias[i % categorias.length]);
+                productos.add(p);
+        }
+        return productos;
     }
 }
